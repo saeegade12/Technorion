@@ -1,0 +1,86 @@
+from uagents import Agent, Context, Model
+import requests
+import json
+
+# Define the message model for uagents
+class Message(Model):
+    message: str
+
+# API key for weather data
+api_key = "ce5062ecf6d04de99ae165846230410"
+
+# User inputs for city and temperature range
+city = input("Enter the name of the city: ")
+min_temp = float(input("Enter the minimum temperature (°C): "))
+max_temp = float(input("Enter the maximum temperature (°C): "))
+
+# Define a weather agent
+weather = Agent(name="weather", seed="I am weather API")
+
+# Function to send a custom message using uagents
+async def send_custom_message(ctx: Context, message):
+    if message:
+        await ctx.send(Message(message=message))
+from uagents import Agent, Context, Model
+import requests
+import json
+
+# Define the message model for uagents
+class Message(Model):
+    message: str
+
+# API key for weather data
+api_key = "ce5062ecf6d04de99ae165846230410"
+
+# User inputs for city and temperature range
+city = input("Enter the name of the city: ")
+min_temp = float(input("Enter the minimum temperature (°C): "))
+max_temp = float(input("Enter the maximum temperature (°C): "))
+
+# Define a weather agent
+weather = Agent(name="weather", seed="I am weather API")
+
+# Function to send a custom message using uagents
+async def send_custom_message(ctx: Context, message):
+    if message:
+        await ctx.send(Message(message=message))
+
+# Variable to track whether a warning has been sent
+warning_sent = False
+warning_message = ""
+
+# Define the agent behavior on a 10-second interval
+@weather.on_interval(period=10.0)
+async def send_alert(ctx: Context):
+    global warning_sent, warning_message
+
+    # Retrieve current weather data
+    url = f"https://api.weatherapi.com/v1/current.json?key={api_key}&q={city}"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        weather_data = json.loads(response.text)
+        temperature_celsius = weather_data["current"]["temp_c"]
+
+        # Check if temperature is out of range
+        if temperature_celsius < min_temp or temperature_celsius > max_temp:
+            if not warning_sent:
+                # Prepare and send a temperature alert message
+                warning_message = f"TEMPERATURE ALERT: The current temperature in {city} is {temperature_celsius}°C."
+                ctx.logger.info(warning_message)
+                await ctx.send(Message(message=warning_message))
+                warning_sent = True
+ else:
+            if warning_sent:
+                # Reset the warning_sent variable if temperature is within bounds
+                warning_sent = False
+                print(f"The current temperature in {city} is {temperature_celsius}°C.")
+    else:
+        # Send an error message if weather data retrieval fails
+        await send_custom_message(ctx, f"Error: Unable to retrieve weather data. Status code: {response.status_code}")
+
+# Run the event loop for the agent
+weather.run()
+
+# Final print statement outside the agent
+print("Program completed.")
